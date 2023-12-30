@@ -1,0 +1,11 @@
+server:
+  host: "localhost"
+  port: "8000"
+databaseConfig:
+  type: "postgres"
+  config:
+      host: "localhost"
+      port: "5432"
+      user: "postgres"
+      password: "1203"
+      dbname: "test"
