@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"sync"
 	"url-short/internal/config"
@@ -18,10 +19,15 @@ func main() {
 	// init logger
 	log := logger.SetupLogger()
 	// init config
-	cfg := config.NewConfig("config/configV1.yaml", log)
+	cfg := config.NewConfig("config/configV2.yaml", log)
 
 	// connect to db
 	db := SQLConnect(cfg, log)
+	res, err := db.GetUrl("git")
+	if err != nil {
+		log.Error(err.Error())
+	}
+	fmt.Println(res)
 
 	_ = db
 	// init and start server
@@ -38,6 +44,7 @@ func main() {
 // SQLConnect connects to the database, the database type depend on the config type.
 func SQLConnect(cfg *config.Config, log *slog.Logger) *storage.Storage {
 	var sqlConnector storage.Connector
+
 	switch cfg.Type {
 	case "sqlite":
 		sqlConnector = &sqlite.SqliteConnector{}

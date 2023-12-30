@@ -18,7 +18,7 @@ type Connector interface {
 }
 
 func (s *Storage) SaveUrl(urlToSave string, alias string) error {
-	const op = "storage.sqlite.SaveUrl"
+	const op = "storage.SaveUrl"
 	stmt, err := s.Db.Prepare("INSERT INTO url(url, alias) VALUES(?, ?)")
 	if err != nil {
 		return err
@@ -32,4 +32,28 @@ func (s *Storage) SaveUrl(urlToSave string, alias string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Storage) GetUrl(alias string) (string, error) {
+	const op = "storage.storage.GetUrl"
+	rows, err := s.Db.Query("SELECT url FROM url WHERE alias = $1", alias)
+	//stmt, err := s.Db.Prepare("SELECT url FROM url WHERE alias = $1")
+	//if err != nil {
+	//	return "", fmt.Errorf("%s: %s", op, err.Error())
+	//}
+	//
+	//rows, err := stmt.Query(fmt.Sprintf("'%s'", alias))
+	//if err != nil {
+	//	return "", fmt.Errorf("%s: %s", op, err.Error())
+	//}
+
+	if rows.Next() {
+		var url string
+		if err = rows.Scan(&url); err != nil {
+			return "", fmt.Errorf("%s: %s", op, err.Error())
+		}
+		return url, nil
+	} else {
+		return "", fmt.Errorf("%s: %s", op, "Url not found")
+	}
 }
