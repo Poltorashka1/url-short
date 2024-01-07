@@ -29,13 +29,12 @@ func main() {
 
 	// init server
 	ser := server.NewServer(cfg)
-	// add routes
-	initAllRoute(ser, log, db)
 
 	wg.Add(1)
 	// start server
 	go ser.Start(log, &wg)
-
+	// add routes
+	initAllRoute(ser, log, db)
 	wg.Wait()
 }
 
@@ -57,7 +56,8 @@ func SQLConnect(cfg *config.Config, log *slog.Logger) storage.Storage {
 // initAllRoute creates a new route in the server's mux.
 func initAllRoute(ser *server.Server, log *slog.Logger, db storage.Storage) {
 	ser.AddRoute("/", test.GetTestResult(log))
-	ser.AddRoute("/getAllUrl", handlers.GetAllUrl(db, log))
+	ser.AddRoute("/all", handlers.All(db, log))
+	ser.AddRoute("/getUrl/", handlers.GetUrlFromAlias(db, log))
 }
 
 // CheckDatabase checks the database

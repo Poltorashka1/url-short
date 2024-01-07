@@ -10,6 +10,17 @@ import (
 //	Db *sql.DB
 //}
 
+// ErrorResponse is an error response.
+type ErrorResponse struct {
+	Error `json:"error"`
+}
+
+type Error struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Details string `json:"details"`
+}
+
 // Storage is an interface for storage.
 type Storage interface {
 	Connect(cfg *config.Config, log *slog.Logger) Storage
