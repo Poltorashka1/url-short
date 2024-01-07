@@ -19,37 +19,36 @@ func main() {
 	// init logger
 	log := logger.SetupLogger()
 	// init config
-	cfg := config.NewConfig("config/configV2.yaml", log)
+	cfg := config.NewConfig("config/configV1.yaml", log)
 
 	// connect to db
 	db := SQLConnect(cfg, log)
-	res, err := db.GetUrl("git")
-	if err != nil {
-		log.Error(err.Error())
-	}
-	fmt.Println(res)
+
+	// debug func to check db function
+	CheckDatabase(db, log)
 
 	_ = db
-	// init and start server
+	// init server
 	ser := server.NewServer(cfg)
-	wg.Add(1)
-	go ser.Start(log, &wg)
-
 	// add routes
 	initAllRoute(ser, log)
+
+	wg.Add(1)
+	// start server
+	go ser.Start(log, &wg)
 
 	wg.Wait()
 }
 
 // SQLConnect connects to the database, the database type depend on the config type.
-func SQLConnect(cfg *config.Config, log *slog.Logger) *storage.Storage {
-	var sqlConnector storage.Connector
+func SQLConnect(cfg *config.Config, log *slog.Logger) storage.Storage {
+	var sqlConnector storage.Storage
 
 	switch cfg.Type {
 	case "sqlite":
-		sqlConnector = &sqlite.SqliteConnector{}
+		sqlConnector = &sqlite.SqliteDatabase{}
 	case "postgres":
-		sqlConnector = &postgres.PostgresConnector{}
+		sqlConnector = &postgres.PostgresDatabase{}
 	}
 
 	db := sqlConnector.Connect(cfg, log)
@@ -59,4 +58,20 @@ func SQLConnect(cfg *config.Config, log *slog.Logger) *storage.Storage {
 // initAllRoute creates a new route in the server's mux.
 func initAllRoute(ser *server.Server, log *slog.Logger) {
 	ser.AddRoute("/", test.GetTestResult(log))
+}
+
+// CheckDatabase checks the database
+// debug function
+func CheckDatabase(db storage.Storage, log *slog.Logger) {
+	res, err := db.GetUrl("git")
+	if err != nil {
+		log.Error(err.Error())
+	}
+	fmt.Println(res)
+
+	res, err = db.GetUrl("popa")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(res)
 }

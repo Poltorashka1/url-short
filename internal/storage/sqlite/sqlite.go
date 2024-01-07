@@ -9,10 +9,12 @@ import (
 	"url-short/internal/storage"
 )
 
-type SqliteConnector struct{}
+type SqliteDatabase struct {
+	Db *sql.DB
+}
 
 // Connect connects to the sqlite database.
-func (s *SqliteConnector) Connect(cfg *config.Config, log *slog.Logger) *storage.Storage {
+func (s *SqliteDatabase) Connect(cfg *config.Config, log *slog.Logger) storage.Storage {
 	db, err := sql.Open("sqlite3", cfg.DatabaseConfig.Config["storagePath"])
 	if err != nil {
 		log.Error(err.Error())
@@ -26,11 +28,11 @@ func (s *SqliteConnector) Connect(cfg *config.Config, log *slog.Logger) *storage
 		log.Error(err.Error())
 	}
 
-	return &storage.Storage{Db: db}
+	return &SqliteDatabase{Db: db}
 }
 
 // createFirstTable creates first table in the database.
-// Its test function is used for testing.
+// Its debug function is used for debugging.
 func createFirstTable(db *sql.DB) error {
 	stmt, err := db.Prepare("CREATE TABLE IF NOT EXISTS url(id INTEGER PRIMARY KEY, url TEXT NOT NULL, alias TEXT NOT NULL UNIQUE)")
 	if err != nil {
