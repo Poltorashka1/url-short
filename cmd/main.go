@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"sync"
 	"url-short/internal/config"
+	"url-short/internal/handlers"
 	"url-short/internal/handlers/test"
 	"url-short/internal/logger"
 	"url-short/internal/server"
@@ -23,15 +24,13 @@ func main() {
 
 	// connect to db
 	db := SQLConnect(cfg, log)
-
 	// debug func to check db function
 	CheckDatabase(db, log)
 
-	_ = db
 	// init server
 	ser := server.NewServer(cfg)
 	// add routes
-	initAllRoute(ser, log)
+	initAllRoute(ser, log, db)
 
 	wg.Add(1)
 	// start server
@@ -56,8 +55,9 @@ func SQLConnect(cfg *config.Config, log *slog.Logger) storage.Storage {
 }
 
 // initAllRoute creates a new route in the server's mux.
-func initAllRoute(ser *server.Server, log *slog.Logger) {
+func initAllRoute(ser *server.Server, log *slog.Logger, db storage.Storage) {
 	ser.AddRoute("/", test.GetTestResult(log))
+	ser.AddRoute("/getAllUrl", handlers.GetAllUrl(db, log))
 }
 
 // CheckDatabase checks the database

@@ -45,3 +45,7 @@ func createFirstTable(db *sql.DB) error {
 	}
 	return nil
 }
+
+func (s *SqliteDatabase) GetDb() *sql.DB {
+	return s.Db
+}

@@ -42,3 +42,7 @@ func (p *PostgresDatabase) Connect(cfg *config.Config, log *slog.Logger) storage
 	log.Info("Connected to Postgres database")
 	return &PostgresDatabase{Db: db}
 }
+
+func (p *PostgresDatabase) GetDb() *sql.DB {
+	return p.Db
+}
