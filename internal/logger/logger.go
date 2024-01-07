@@ -3,7 +3,7 @@ package logger
 import (
 	"log/slog"
 	"os"
-	"url-short/internal/lib/colorLog"
+	"url-short/internal/logger/lib/colorLog"
 )
 
 // SetupLogger creates and configures a logger.
