@@ -54,7 +54,11 @@ func (p *PostgresDatabase) GetAlias(url string) (string, error) {
 
 func (p *PostgresDatabase) DeleteUrl(alias string) error {
 	const op = "storage.postgres.deleteUrl"
-	_, err := p.Db.Exec("DELETE FROM url WHERE alias = $1", alias)
+	res, err := p.Db.Exec("DELETE FROM url WHERE alias = $1", alias)
+	if c, _ := res.RowsAffected(); c == 0 {
+		return fmt.Errorf("%s: %s", op, "Url Not Found to delete")
+	}
+
 	if err != nil {
 		return fmt.Errorf("%s: %s", op, err.Error())
 	}

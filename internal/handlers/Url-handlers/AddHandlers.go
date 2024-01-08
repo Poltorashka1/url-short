@@ -16,6 +16,8 @@ func AddAliasForUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFun
 
 		url := r.URL.Query().Get("url")
 		alias := r.URL.Query().Get("alias")
+
+		// check url and alias for validity
 		err := CheckUrl(url, alias)
 		if err != nil {
 			errorData := handlers.NewErrorResponse(http.StatusBadRequest, fmt.Errorf("%s: %s", op, err.Error()).Error())
@@ -40,6 +42,7 @@ func AddAliasForUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFun
 
 }
 
+// CheckUrl check alias and url for validity
 func CheckUrl(url, alias string) error {
 	const op = "handlers.Url-handlers.CheckUrl"
 	if len(url) <= 0 {

@@ -59,4 +59,5 @@ func initAllRoute(ser *server.Server, log *slog.Logger, db storage.Storage) {
 	ser.AddRoute("/getUrl/", Url_handlers.GetUrlFromAliasHandler(db, log))
 	ser.AddRoute("/getAlias/", Url_handlers.GetAliasFromUrlHandler(db, log))
 	ser.AddRoute("/saveUrl/", Url_handlers.AddAliasForUrlHandler(db, log))
+	ser.AddRoute("/deleteUrl/", Url_handlers.DeleteUrlHandler(db, log))
 }

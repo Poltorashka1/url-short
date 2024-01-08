@@ -103,6 +103,8 @@ func GetUrlFromAliasHandler(db storage.Storage, log *slog.Logger) http.HandlerFu
 	}
 }
 
+// TODO refactor(answer need to be bigger)
+
 // GetAliasFromUrlHandler gets all alias from url.
 func GetAliasFromUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
