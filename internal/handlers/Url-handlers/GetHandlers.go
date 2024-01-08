@@ -9,8 +9,6 @@ import (
 	"url-short/internal/storage"
 )
 
-// TODO: get url from alias
-
 type AllUrl struct {
 	AllUrl []Urls `json:"AllUrl"`
 	Code   int    `json:"code"`
@@ -22,7 +20,8 @@ type Urls struct {
 	Alias string `json:"alias"`
 }
 
-func All(db storage.Storage, log *slog.Logger) http.HandlerFunc {
+// GetAllUrlHandler returns all url in json response.
+func GetAllUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.GetAllUrl"
 		data := AllUrl{AllUrl: make([]Urls, 0, 8)}
@@ -32,7 +31,7 @@ func All(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 		//  get all url and write all to data
 		err := GetAllUrl(db, &data)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusInternalServerError, "Server Error", err.Error())
+			errorData := handlers.NewErrorResponse(http.StatusInternalServerError, fmt.Errorf("%s - Server Error: %s", op, err.Error()).Error())
 
 			// return error response and log it
 			log.Error(fmt.Sprintf("%s: %s", op, err.Error()))
@@ -61,7 +60,6 @@ func GetAllUrl(db *sql.DB, data *AllUrl) error {
 		if err != nil {
 			return err
 		}
-		//data.Ekz[url] = Ekz{Id: id, Url: url, Alias: alias, Code: http.StatusOK}
 		// append url to data
 		data.AllUrl = append(data.AllUrl, Urls{Id: id, Url: url, Alias: alias})
 	}
@@ -74,8 +72,8 @@ type Alias struct {
 	Code  int    `json:"code"`
 }
 
-// GetUrlFromAlias gets url from alias.
-func GetUrlFromAlias(db storage.Storage, log *slog.Logger) http.HandlerFunc {
+// GetUrlFromAliasHandler returns specified url.
+func GetUrlFromAliasHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	const op = "handlers.GetUrl"
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -84,7 +82,7 @@ func GetUrlFromAlias(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 		// get specified url from database
 		res, err := db.GetUrl(url)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusNotFound, "Url not found", err.Error())
+			errorData := handlers.NewErrorResponse(http.StatusNotFound, fmt.Errorf("%s - Url not found: %s", op, err.Error()).Error()) //"Url not found", err.Error()
 
 			// return error response
 			handlers.EncodeJson(w, log, errorData)
@@ -96,3 +94,10 @@ func GetUrlFromAlias(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 		handlers.EncodeJson(w, log, al)
 	}
 }
+
+// TODO: GetAliasFromUrlHandler()
+// GetAliasFromUrl gets all alias from url.
+// func GetAliasFromUrlHandler(db storage.Storage, log *slog.Logger) http.handleFunction {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		const op = "handlers.GetAliasFromUrl"
+//}

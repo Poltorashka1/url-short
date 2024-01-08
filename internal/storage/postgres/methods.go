@@ -17,6 +17,9 @@ func (p *PostgresDatabase) SaveUrl(urlToSave string, alias string) error {
 func (p *PostgresDatabase) GetUrl(alias string) (string, error) {
 	const op = "storage.storage.GetUrl"
 	rows, err := p.Db.Query("SELECT url FROM url WHERE alias = $1", alias)
+	if err != nil {
+		return "", fmt.Errorf("%s: %s", op, err.Error())
+	}
 
 	if rows.Next() {
 		var url string
@@ -27,4 +30,13 @@ func (p *PostgresDatabase) GetUrl(alias string) (string, error) {
 	} else {
 		return "", fmt.Errorf("%s: %s", op, "Url not found")
 	}
+}
+
+func (p *PostgresDatabase) DeleteUrl(alias string) error {
+	const op = "storage.storage.deleteUrl"
+	_, err := p.Db.Exec("DELETE FROM url WHERE alias = $1", alias)
+	if err != nil {
+		return fmt.Errorf("%s: %s", op, err.Error())
+	}
+	return nil
 }

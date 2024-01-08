@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// TODO: refactor handlers errorResponse format to make it more readable
+
 // ErrorResponse is an error response.
 type ErrorResponse struct {
 	Error `json:"error"`
@@ -15,16 +17,14 @@ type ErrorResponse struct {
 type Error struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
-	Details string `json:"details"`
 }
 
 // NewErrorResponse create new error response.
-func NewErrorResponse(code int, message string, details string) *ErrorResponse {
+func NewErrorResponse(code int, message string) *ErrorResponse {
 	return &ErrorResponse{
 		Error: Error{
 			Code:    code,
 			Message: message,
-			Details: details,
 		},
 	}
 }

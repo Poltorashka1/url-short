@@ -28,3 +28,12 @@ func (s *SqliteDatabase) GetUrl(alias string) (string, error) {
 		return "", fmt.Errorf("%s: %s", op, "Url not found")
 	}
 }
+
+func (s *SqliteDatabase) DeleteUrl(alias string) error {
+	const op = "storage.storage.deleteUrl"
+	_, err := s.Db.Exec("DELETE FROM url WHERE alias = ?", alias)
+	if err != nil {
+		return fmt.Errorf("%s: %s", op, err.Error())
+	}
+	return nil
+}

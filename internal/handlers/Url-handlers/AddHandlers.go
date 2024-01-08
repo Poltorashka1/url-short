@@ -1,16 +1,17 @@
 package Url_handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"url-short/internal/handlers"
 	"url-short/internal/storage"
 )
 
-// TODO: check url
+// TODO: check url in AddAliasForUrl()
 
-// AddAliasForUrl adds a new alias for url
-func AddAliasForUrl(db storage.Storage, log *slog.Logger) http.HandlerFunc {
+// AddAliasForUrlHandler adds a new alias for url
+func AddAliasForUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.AddAliasForUrl"
 
@@ -20,7 +21,7 @@ func AddAliasForUrl(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 		// save url in database
 		err := db.SaveUrl(newUrl, alias)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusInternalServerError, "This alias already exists", err.Error())
+			errorData := handlers.NewErrorResponse(http.StatusInternalServerError, fmt.Errorf("%s - Url already exists: %s", op, err.Error()).Error())
 
 			// return error response
 			handlers.EncodeJson(w, log, errorData)

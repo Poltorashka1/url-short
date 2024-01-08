@@ -55,7 +55,7 @@ func SQLConnect(cfg *config.Config, log *slog.Logger) storage.Storage {
 // initAllRoute creates a new route in the server's mux.
 func initAllRoute(ser *server.Server, log *slog.Logger, db storage.Storage) {
 	ser.AddRoute("/", test.GetTestResult(log))
-	ser.AddRoute("/all", Url_handlers.All(db, log))
-	ser.AddRoute("/getUrl/", Url_handlers.GetUrlFromAlias(db, log))
-	ser.AddRoute("/saveUrl/", Url_handlers.AddAliasForUrl(db, log))
+	ser.AddRoute("/all", Url_handlers.GetAllUrlHandler(db, log))
+	ser.AddRoute("/getUrl/", Url_handlers.GetUrlFromAliasHandler(db, log))
+	ser.AddRoute("/saveUrl/", Url_handlers.AddAliasForUrlHandler(db, log))
 }
