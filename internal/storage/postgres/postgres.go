@@ -14,7 +14,7 @@ type PostgresDatabase struct {
 	Db *sql.DB
 }
 
-// Connect connects to the postgres database.
+// Connect connects to the postgres database and create PostgresDatabase struct.
 func (p *PostgresDatabase) Connect(cfg *config.Config, log *slog.Logger) storage.Storage {
 	dbConfig := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -43,6 +43,7 @@ func (p *PostgresDatabase) Connect(cfg *config.Config, log *slog.Logger) storage
 	return &PostgresDatabase{Db: db}
 }
 
+// GetDb returns the database db field.
 func (p *PostgresDatabase) GetDb() *sql.DB {
 	return p.Db
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"sync"
 	"url-short/internal/config"
@@ -19,22 +18,22 @@ var wg sync.WaitGroup
 func main() {
 	// init logger
 	log := logger.SetupLogger()
-	// init config
-	cfg := config.NewConfig("config/configV1.yaml", log)
 
-	// connect to db
+	// init config
+	cfg := config.NewConfig("config/configV2.yaml", log)
+
+	// connect to db (type depending on the config)
 	db := SQLConnect(cfg, log)
-	// debug func to check db function
-	CheckDatabase(db, log)
 
 	// init server
 	ser := server.NewServer(cfg)
 
-	wg.Add(1)
 	// start server
+	wg.Add(1)
 	go ser.Start(log, &wg)
 	// add routes
 	initAllRoute(ser, log, db)
+
 	wg.Wait()
 }
 
@@ -58,20 +57,5 @@ func initAllRoute(ser *server.Server, log *slog.Logger, db storage.Storage) {
 	ser.AddRoute("/", test.GetTestResult(log))
 	ser.AddRoute("/all", Url_handlers.All(db, log))
 	ser.AddRoute("/getUrl/", Url_handlers.GetUrlFromAlias(db, log))
-}
-
-// CheckDatabase checks the database
-// debug function
-func CheckDatabase(db storage.Storage, log *slog.Logger) {
-	res, err := db.GetUrl("git")
-	if err != nil {
-		log.Error(err.Error())
-	}
-	fmt.Println(res)
-
-	res, err = db.GetUrl("popa")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Println(res)
+	ser.AddRoute("/saveUrl/", Url_handlers.AddAliasForUrl(db, log))
 }
