@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"url-short/internal/handlers"
+	"url-short/internal/handlers/general"
 	"url-short/internal/storage"
 )
 

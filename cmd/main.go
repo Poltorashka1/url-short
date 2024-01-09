@@ -5,12 +5,10 @@ import (
 	"sync"
 	"url-short/internal/config"
 	"url-short/internal/handlers/Url-handlers"
-	"url-short/internal/handlers/test"
 	"url-short/internal/logger"
 	"url-short/internal/server"
 	"url-short/internal/storage"
 	"url-short/internal/storage/postgres"
-	"url-short/internal/storage/sqlite"
 )
 
 var wg sync.WaitGroup
@@ -42,8 +40,8 @@ func SQLConnect(cfg *config.Config, log *slog.Logger) storage.Storage {
 	var sqlConnector storage.Storage
 
 	switch cfg.Type {
-	case "sqlite":
-		sqlConnector = &sqlite.SqliteDatabase{}
+	//case "sqlite":
+	//	sqlConnector = &sqlite.SqliteDatabase{}
 	case "postgres":
 		sqlConnector = &postgres.PostgresDatabase{}
 	}
@@ -54,7 +52,6 @@ func SQLConnect(cfg *config.Config, log *slog.Logger) storage.Storage {
 
 // initAllRoute creates a new route in the server's mux.
 func initAllRoute(ser *server.Server, log *slog.Logger, db storage.Storage) {
-	ser.AddRoute("/", test.GetTestResult(log))
 	ser.AddRoute("/all", Url_handlers.GetAllUrlHandler(db, log))
 	ser.AddRoute("/getUrl/", Url_handlers.GetUrlFromAliasHandler(db, log))
 	ser.AddRoute("/getAlias/", Url_handlers.GetAliasFromUrlHandler(db, log))

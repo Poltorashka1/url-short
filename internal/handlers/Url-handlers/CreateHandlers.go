@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"regexp"
-	"url-short/internal/handlers"
+	"url-short/internal/handlers/general"
 	"url-short/internal/storage"
 )
 
@@ -18,7 +17,7 @@ func AddAliasForUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFun
 		alias := r.URL.Query().Get("alias")
 
 		// check url and alias for validity
-		err := CheckUrl(url, alias)
+		err := handlers.CheckUrlAndAlias(url, alias)
 		if err != nil {
 			errorData := handlers.NewErrorResponse(http.StatusBadRequest, fmt.Errorf("%s: %s", op, err.Error()).Error())
 
@@ -40,20 +39,4 @@ func AddAliasForUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFun
 		handlers.EncodeJson(w, log, successData)
 	}
 
-}
-
-// CheckUrl check alias and url for validity
-func CheckUrl(url, alias string) error {
-	const op = "handlers.Url-handlers.CheckUrl"
-	if len(url) <= 0 {
-		return fmt.Errorf("%s: %s", op, "Length of url must be > 0")
-	}
-	if len(alias) <= 0 {
-		return fmt.Errorf("%s: %s", op, "Length of alias must be > 0")
-	}
-	pattern := `^https?:\/\/[^\s\/$.?#].[^\s]*$`
-	if !regexp.MustCompile(pattern).MatchString(url) {
-		return fmt.Errorf("%s: %s", op, "Url Not Valid")
-	}
-	return nil
 }

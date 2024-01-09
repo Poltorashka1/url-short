@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"url-short/internal/handlers"
+	"url-short/internal/handlers/general"
 	"url-short/internal/storage"
 )
 
@@ -84,14 +84,20 @@ func NewPath(url, alias string, code int) *Path {
 func GetUrlFromAliasHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.GetUrl"
+
+		// check alias for validity
 		alias := r.URL.Query().Get("alias")
+		err := handlers.CheckAlias(alias)
+		if err != nil {
+			errorData := handlers.NewErrorResponse(http.StatusBadRequest, fmt.Errorf("%s: %s", op, err.Error()).Error())
+			handlers.EncodeJson(w, log, errorData)
+			return
+		}
 
 		// get specified url from database
 		url, err := db.GetUrl(alias)
 		if err != nil {
 			errorData := handlers.NewErrorResponse(http.StatusNotFound, fmt.Errorf("%s: %s", op, err.Error()).Error()) //"Url not found", err.Error()
-
-			// return error response
 			handlers.EncodeJson(w, log, errorData)
 			return
 		}
@@ -103,26 +109,29 @@ func GetUrlFromAliasHandler(db storage.Storage, log *slog.Logger) http.HandlerFu
 	}
 }
 
-// TODO refactor(answer need to be bigger)
-
 // GetAliasFromUrlHandler gets all alias from url.
 func GetAliasFromUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.GetAliasFromUrl"
-		url := r.URL.Query().Get("url")
-		// get specified alias from database
-		alias, err := db.GetAlias(url)
 
+		// check url for validity
+		url := r.URL.Query().Get("url")
+		err := handlers.CheckUrl(url)
+		if err != nil {
+			errorData := handlers.NewErrorResponse(http.StatusBadRequest, fmt.Errorf("%s: %s", op, err.Error()).Error())
+			handlers.EncodeJson(w, log, errorData)
+			return
+		}
+
+		// get specified alias from database
+		allAliasList, err := db.GetAlias(url)
 		if err != nil {
 			errorData := handlers.NewErrorResponse(http.StatusNotFound, fmt.Errorf("%s: %s", op, err.Error()).Error())
-
-			// return error response
 			handlers.EncodeJson(w, log, errorData)
 			return
 		}
 
 		// return specified alias
-		data := NewPath(url, alias, http.StatusOK)
-		handlers.EncodeJson(w, log, data)
+		handlers.EncodeJson(w, log, allAliasList)
 	}
 }
