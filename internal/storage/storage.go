@@ -46,3 +46,19 @@ func NewPath(id int, url, alias string) *Path {
 		Alias: alias,
 	}
 }
+
+type StorageError struct {
+	Path    string
+	Message string
+}
+
+func NewStorageError(path, message string) *StorageError {
+	return &StorageError{
+		Path:    path,
+		Message: message,
+	}
+}
+
+func (e *StorageError) Error() string {
+	return e.Message
+}

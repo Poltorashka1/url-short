@@ -9,16 +9,19 @@ import (
 	"url-short/internal/server"
 	"url-short/internal/storage"
 	"url-short/internal/storage/postgres"
+	"url-short/internal/storage/sqlite"
 )
 
 var wg sync.WaitGroup
+
+// TODO: new error response
 
 func main() {
 	// init logger
 	log := logger.SetupLogger()
 
 	// init config
-	cfg := config.NewConfig("config/configV2.yaml", log)
+	cfg := config.NewConfig("config/configV1.yaml", log)
 
 	// connect to db (type depending on the config)
 	db := SQLConnect(cfg, log)
@@ -40,8 +43,8 @@ func SQLConnect(cfg *config.Config, log *slog.Logger) storage.Storage {
 	var sqlConnector storage.Storage
 
 	switch cfg.Type {
-	//case "sqlite":
-	//	sqlConnector = &sqlite.SqliteDatabase{}
+	case "sqlite":
+		sqlConnector = &sqlite.SqliteDatabase{}
 	case "postgres":
 		sqlConnector = &postgres.PostgresDatabase{}
 	}

@@ -14,15 +14,23 @@ func DeleteUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 		const op = "handlers.DeleteUrl"
 
 		alias := r.URL.Query().Get("alias")
-		err := db.DeleteUrl(alias)
-		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusNotFound, fmt.Errorf("%s: %s", op, err.Error()).Error())
+		fmt.Println(alias)
 
-			handlers.EncodeJson(w, log, errorData)
+		err := handlers.CheckAlias(alias)
+		if err != nil {
+			handlers.AddPath(err, op)
+			handlers.EncodeJson(w, log, err)
 			return
 		}
 
-		data := handlers.NewSuccessResponse(http.StatusOK, "Delete Success")
-		handlers.EncodeJson(w, log, data)
+		err = db.DeleteUrl(alias)
+		if err != nil {
+			handlers.AddPath(err, op)
+			handlers.EncodeJson(w, log, err)
+			return
+		}
+
+		resultData := handlers.NewSuccessResponse(http.StatusOK, "Delete Success")
+		handlers.EncodeJson(w, log, resultData)
 	}
 }

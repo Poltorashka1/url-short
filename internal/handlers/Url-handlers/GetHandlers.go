@@ -2,7 +2,6 @@ package Url_handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"url-short/internal/handlers/general"
@@ -20,6 +19,8 @@ type Urls struct {
 	Alias string `json:"alias"`
 }
 
+// TODO : refactor this handler
+
 // GetAllUrlHandler returns all url in json response.
 func GetAllUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -31,11 +32,8 @@ func GetAllUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 		//  get all url and write all to data
 		err := GetAllUrl(db, &data)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusInternalServerError, fmt.Errorf("%s - Server Error: %s", op, err.Error()).Error())
-
-			// return error response and log it
-			log.Error(fmt.Sprintf("%s: %s", op, err.Error()))
-			handlers.EncodeJson(w, log, errorData)
+			handlers.AddPath(err, op)
+			handlers.EncodeJson(w, log, err)
 			return
 		}
 		data.Code = http.StatusOK
@@ -45,11 +43,15 @@ func GetAllUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFunc {
 	}
 }
 
+// TODO : GetAllUrl() replace to storage.methods
+
 // GetAllUrl gets all url from database.
 func GetAllUrl(db *sql.DB, data *AllUrl) error {
+	const op = "handlers.GetAllUrl"
+
 	res, err := db.Query("SELECT * FROM url")
 	if err != nil {
-		return err
+		return handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 	}
 
 	for res.Next() {
@@ -58,13 +60,17 @@ func GetAllUrl(db *sql.DB, data *AllUrl) error {
 		var alias string
 		err := res.Scan(&id, &url, &alias)
 		if err != nil {
+			err := handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 			return err
 		}
 		// append url to data
 		data.AllUrl = append(data.AllUrl, Urls{Id: id, Url: url, Alias: alias})
 	}
+
 	return nil
 }
+
+// TODO : replace struct to new place
 
 type Path struct {
 	Url   string `json:"url"`
@@ -89,16 +95,16 @@ func GetUrlFromAliasHandler(db storage.Storage, log *slog.Logger) http.HandlerFu
 		alias := r.URL.Query().Get("alias")
 		err := handlers.CheckAlias(alias)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusBadRequest, fmt.Errorf("%s: %s", op, err.Error()).Error())
-			handlers.EncodeJson(w, log, errorData)
+			handlers.AddPath(err, op)
+			handlers.EncodeJson(w, log, err)
 			return
 		}
 
 		// get specified url from database
 		url, err := db.GetUrl(alias)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusNotFound, fmt.Errorf("%s: %s", op, err.Error()).Error()) //"Url not found", err.Error()
-			handlers.EncodeJson(w, log, errorData)
+			handlers.AddPath(err, op)
+			handlers.EncodeJson(w, log, err)
 			return
 		}
 
@@ -118,16 +124,16 @@ func GetAliasFromUrlHandler(db storage.Storage, log *slog.Logger) http.HandlerFu
 		url := r.URL.Query().Get("url")
 		err := handlers.CheckUrl(url)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusBadRequest, fmt.Errorf("%s: %s", op, err.Error()).Error())
-			handlers.EncodeJson(w, log, errorData)
+			handlers.AddPath(err, op)
+			handlers.EncodeJson(w, log, err)
 			return
 		}
 
 		// get specified alias from database
 		allAliasList, err := db.GetAlias(url)
 		if err != nil {
-			errorData := handlers.NewErrorResponse(http.StatusNotFound, fmt.Errorf("%s: %s", op, err.Error()).Error())
-			handlers.EncodeJson(w, log, errorData)
+			handlers.AddPath(err, op)
+			handlers.EncodeJson(w, log, err)
 			return
 		}
 

@@ -12,6 +12,7 @@ import (
 func EncodeJson(w http.ResponseWriter, log *slog.Logger, data interface{}) {
 	const op = "handlers.EncodeJson"
 	w.Header().Set("Content-type", "application/json")
+
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		err := fmt.Sprintf("%s: %s", op, err.Error())
@@ -23,33 +24,49 @@ func EncodeJson(w http.ResponseWriter, log *slog.Logger, data interface{}) {
 // CheckUrlAndAlias check alias and url for validity
 func CheckUrlAndAlias(url, alias string) error {
 	const op = "handlers.CheckUrlAndAlias"
+
 	err := CheckAlias(alias)
 	if err != nil {
-		return fmt.Errorf("%s: %s", op, err.Error())
+		if err, ok := err.(*ResponseError); ok {
+			err.AddPath(op)
+		}
+		return err
 	}
+
 	err = CheckUrl(url)
 	if err != nil {
-		return fmt.Errorf("%s: %s", op, err.Error())
+
+		if err, ok := err.(*ResponseError); ok {
+			err.AddPath(op)
+		}
+		return err
 	}
 	return nil
 }
 
 func CheckUrl(url string) error {
 	const op = "handlers.CheckUrl"
+
 	if len(url) <= 0 {
-		return fmt.Errorf("%s: %s", op, "Length of url must be > 0")
+		err := NewErrResp(http.StatusBadRequest, op, "The url parameter is missing")
+		return err
 	}
+
 	pattern := `^https?:\/\/[^\s\/$.?#].[^\s]*$`
 	if !regexp.MustCompile(pattern).MatchString(url) {
-		return fmt.Errorf("%s: %s", op, "Url Not Valid")
+		err := NewErrResp(http.StatusBadRequest, op, "Url format not valid: Url must start with 'http://' or 'https://'")
+		return err
 	}
+
 	return nil
 }
 
 func CheckAlias(alias string) error {
 	const op = "handlers.CheckAlias"
+
 	if len(alias) <= 0 {
-		return fmt.Errorf("%s: %s", op, "Length of alias must be > 0")
+		err := NewErrResp(http.StatusBadRequest, op, "The alias parameter is missing or less than 1 character")
+		return err
 	}
 	return nil
 }

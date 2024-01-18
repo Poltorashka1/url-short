@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"fmt"
+	"github.com/lib/pq"
 	"net/http"
+	handlers "url-short/internal/handlers/general"
 	"url-short/internal/storage"
 )
 
@@ -11,28 +12,31 @@ func (p *PostgresDatabase) SaveUrl(urlToSave string, alias string) error {
 
 	_, err := p.Db.Exec("INSERT INTO url(url, alias) VALUES($1, $2)", urlToSave, alias)
 	if err != nil {
-		return err
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return handlers.NewErrResp(http.StatusInternalServerError, op, "Alias already exists")
+		}
+		return handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 	}
 	return nil
 }
 
 func (p *PostgresDatabase) GetUrl(alias string) (string, error) {
-	const op = "storage.postgres.GetUrl"
+	const op = "storage.sqlite.GetUrl"
+
 	rows, err := p.Db.Query("SELECT url FROM url WHERE alias = $1", alias)
 	if err != nil {
-		return "", fmt.Errorf("%s: %s", op, err.Error())
+		return "", handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 	}
 
 	if rows.Next() {
 		var url string
-		err := rows.Scan(&url)
-		if err != nil {
-			return "", fmt.Errorf("%s: %s", op, err.Error())
+		if err = rows.Scan(&url); err != nil {
+			return "", handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 		}
 		return url, nil
+	} else {
+		return "", handlers.NewErrResp(http.StatusNotFound, op, "Url Not Found")
 	}
-	return "", fmt.Errorf("%s: %s", op, "Url Not Found")
-
 }
 
 func (p *PostgresDatabase) GetAlias(urlReq string) (storage.AllAliasList, error) {
@@ -42,10 +46,9 @@ func (p *PostgresDatabase) GetAlias(urlReq string) (storage.AllAliasList, error)
 	// request to database to get all record with url
 	rows, err := p.Db.Query("SELECT * FROM url WHERE url = $1", urlReq)
 	if err != nil {
-		return bad, fmt.Errorf("%s: %s", op, err.Error())
+		return bad, handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 	}
 
-	// ToDo: refactor []Path to more fast way
 	allAlias := make([]storage.Path, 0, 8)
 
 	if rows.Next() {
@@ -56,7 +59,7 @@ func (p *PostgresDatabase) GetAlias(urlReq string) (storage.AllAliasList, error)
 
 			err := rows.Scan(&id, &url, &alias)
 			if err != nil {
-				return bad, fmt.Errorf("%s: %s", op, err.Error())
+				return bad, handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 			}
 
 			// append alias to data
@@ -69,18 +72,28 @@ func (p *PostgresDatabase) GetAlias(urlReq string) (storage.AllAliasList, error)
 		}
 		return storage.AllAliasList{Url: urlReq, Alias: allAlias, Code: http.StatusOK}, nil
 	}
-	return bad, fmt.Errorf("%s: %s", op, "Alias Not Found")
+	return bad, handlers.NewErrResp(http.StatusNotFound, op, "Url Not Found")
 }
 
 func (p *PostgresDatabase) DeleteUrl(alias string) error {
-	const op = "storage.postgres.deleteUrl"
-	res, err := p.Db.Exec("DELETE FROM url WHERE alias = $1", alias)
-	if c, _ := res.RowsAffected(); c == 0 {
-		return fmt.Errorf("%s: %s", op, "Url Not Found to delete")
+	const op = "storage.sqlite.deleteUrl"
+	result, err := p.Db.Exec("DELETE FROM url WHERE alias = $1", alias)
+
+	// check database error
+	if err != nil {
+		return handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 	}
 
+	rows, err := result.RowsAffected()
+	// check RowsAffected() error
 	if err != nil {
-		return fmt.Errorf("%s: %s", op, err.Error())
+		return handlers.NewErrResp(http.StatusInternalServerError, op, err.Error())
 	}
+
+	// check if there is no rows affected
+	if rows == 0 {
+		return handlers.NewErrResp(http.StatusInternalServerError, op, "Alias not found")
+	}
+
 	return nil
 }
